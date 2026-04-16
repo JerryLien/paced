@@ -1,0 +1,71 @@
+# Training State Schema v0.1
+#
+# This file defines the schema for ~/.paced/training_state.yaml
+# Maintained automatically by state_manager.py — do not hand-edit.
+
+schema_version: "0.1"
+last_updated: string              # ISO 8601 datetime with timezone
+last_agent_run_id: string
+
+current_phase:
+  phase_name: enum                # recovery | base | build | peak | taper | race_week | post_race
+  phase_start_date: string        # ISO 8601 date
+  phase_planned_weeks: integer
+  week_in_phase: integer
+  weeks_to_next_a_race: integer
+  next_a_race: string             # Race name from athlete_profile
+  next_b_race: string|null
+
+fitness_snapshot:
+  # Calculated by Layer 2 from the most recent 90 days of data.
+  calculated_at: string           # ISO 8601 datetime
+  ctl: float                      # Chronic Training Load (42-day exponential weighted)
+  atl: float                      # Acute Training Load (7-day exponential weighted)
+  tsb: float                      # Training Stress Balance (CTL - ATL)
+  form_status: enum               # very_tired | tired | neutral | fresh | peaked
+
+  acwr: float                     # Acute:Chronic Workload Ratio
+  acwr_zone: enum                 # detraining(<0.8) | optimal(0.8-1.3) | danger(1.3-1.5) | injury_risk(>1.5)
+
+  weekly_km_last_4w: array[float] # Last 4 weeks of total running km
+  weekly_km_trend: enum           # declining | stable | increasing
+
+last_week_summary:
+  # Quick reference for the agent about the most recent complete week.
+  week_start: string
+  week_end: string
+  total_run_km: float
+  total_ride_km: float
+  total_swim_km: float
+  total_hours: float
+  quality_sessions_completed: integer
+  quality_sessions_planned: integer
+  adherence_pct: float
+  notable_events: array[string]   # Human-readable event descriptions
+
+agent_decisions_log:
+  # Last 5 agent decisions for cross-session context continuity.
+  # The agent reads this before making a new decision to maintain
+  # consistency (e.g. not flip-flopping between phases).
+  type: array
+  max_items: 5
+  items:
+    run_id: string
+    timestamp: string
+    decision_summary: string
+    prescribed_weekly_km: float
+    safety_overrides_applied: array[string]
+
+pending_workouts:
+  # Workouts prescribed by the agent's last run, not yet completed.
+  # Used to compare prescribed vs actual in the next analysis cycle.
+  generated_at: string
+  week_start: string
+  workouts:
+    type: array
+    items:
+      date: string
+      type: enum                  # easy_run | long_run | tempo | interval | recovery | cross_train | rest
+      prescribed_distance_km: float
+      prescribed_pace: string     # "M:SS/km"
+      prescribed_hr_zone: string  # "Z1".."Z5"

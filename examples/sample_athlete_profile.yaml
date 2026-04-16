@@ -1,0 +1,56 @@
+# ~/.paced/athlete_profile.yaml
+# Copy this file to ~/.paced/athlete_profile.yaml and edit to match your setup.
+# See docs/contracts/athlete_profile.yaml for the full schema reference.
+
+schema_version: "0.1"
+
+athlete:
+  name: "Your Name"
+  birth_year: 1990
+  resting_hr: 55
+  weight_kg: 70
+  hr_max_measured: null           # Set to your measured max HR, or leave null
+  hr_max_source: "estimated"      # field_test | estimated | lab
+
+races:
+  - name: "Spring Marathon 2027"
+    date: "2027-03-07"
+    sport_type: "Run"
+    distance_km: 42.195
+    priority: "A"
+    target_time: "3:30:00"
+    notes: "Season goal race"
+
+  - name: "Fall Half Marathon"
+    date: "2026-11-15"
+    sport_type: "Run"
+    distance_km: 21.0975
+    priority: "B"
+    target_time: "1:40:00"
+    notes: "Dress rehearsal for marathon"
+
+preferences:
+  periodization_style: "pfitzinger"
+  # Options: daniels | pfitzinger | friel_triathlon | hanson | custom
+
+  weekly_structure:
+    long_run_day: "Sunday"
+    quality_days: ["Tuesday", "Thursday"]
+    rest_day: "Monday"
+    cross_training_ok: true
+
+  constraints:
+    max_weekly_hours: 10
+    max_weekly_km: 80
+    no_run_days: []
+    morning_only: false
+
+  safety_limits:
+    max_weekly_km_increase_pct: 10
+    max_long_run_pct_of_weekly: 35
+    min_recovery_days_per_week: 1
+
+health_flags:
+  cardiac_monitoring: false
+  recent_injuries: []
+  medications_affecting_hr: false

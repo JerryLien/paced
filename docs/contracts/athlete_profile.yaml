@@ -1,0 +1,60 @@
+# Athlete Profile Schema v0.1
+#
+# This file defines the schema for ~/.paced/athlete_profile.yaml
+# The user edits this file to set their races, zones, and preferences.
+# See examples/sample_athlete_profile.yaml for a working example.
+
+schema_version: "0.1"
+
+athlete:
+  name: string                    # Display name
+  birth_year: integer             # Optional; used to estimate HR max if not measured
+  resting_hr: integer             # bpm; recommend updating monthly
+  weight_kg: float                # Optional; used for TSS estimation
+  hr_max_measured: integer|null   # Measured value; null = system estimates from age
+  hr_max_source: enum             # field_test | estimated | lab
+
+races:
+  type: array
+  items:
+    name: string
+    date: string                  # ISO 8601 date
+    sport_type: enum              # Run | Ride | Swim | Triathlon
+    distance_km: float
+    priority: enum                # A (season goal) | B (important) | C (training race)
+    target_time: string|null      # "H:MM:SS" or null
+    notes: string                 # Free text
+
+preferences:
+  periodization_style: enum
+    # Determines which prompt file the agent loads:
+    # daniels     -> agent-core/src/paced_agent/prompts/periodization/daniels.md
+    # pfitzinger  -> agent-core/src/paced_agent/prompts/periodization/pfitzinger.md
+    # friel_triathlon -> .../friel_triathlon.md
+    # hanson      -> .../hanson.md
+    # custom      -> user provides their own prompt file
+
+  weekly_structure:
+    long_run_day: enum            # Monday..Sunday
+    quality_days: array[enum]     # Days for interval/tempo sessions
+    rest_day: enum                # Primary rest day
+    cross_training_ok: boolean    # Allow bike/swim on non-run days
+
+  constraints:
+    max_weekly_hours: float
+    max_weekly_km: float
+    no_run_days: array[enum]      # Days when running is impossible
+    morning_only: boolean
+
+  safety_limits:
+    # HARD LIMITS enforced by safety_guard.py, not by LLM prompt.
+    # Agent output exceeding these is automatically rewritten.
+    max_weekly_km_increase_pct: integer   # Max single-week volume increase (default: 10)
+    max_long_run_pct_of_weekly: integer   # Long run cap as % of weekly volume (default: 35)
+    min_recovery_days_per_week: integer   # Minimum recovery/rest days (default: 1)
+
+health_flags:
+  cardiac_monitoring: boolean     # When true: extra conservatism on Z4/Z5, drift alerts at >6%
+  recent_injuries: array
+    # items: {area: string, since: date, status: enum[active|recovering|resolved]}
+  medications_affecting_hr: boolean

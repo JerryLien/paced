@@ -1,0 +1,126 @@
+# paced MCP Tool Contracts v0.1
+#
+# These schemas define the interface between Layer 3 (Agent) and
+# Layer 1+2 (MCP Server). All data returned is pre-cleaned by
+# Layer 2 — the agent never sees raw Strava API responses.
+
+tools:
+
+  - name: get_recent_training_summary
+    description: |
+      Fetch a training summary for the past N days, including volume
+      totals and advanced load indicators. Data is cleaned by Layer 2
+      and ready for training status assessment.
+    input:
+      days:
+        type: integer
+        default: 14
+        min: 1
+        max: 90
+        description: Number of days to look back
+      sport_types:
+        type: array
+        items: [Run, Ride, Swim, Workout]
+        default: [Run, Ride, Swim]
+    output:
+      period:
+        start_date: string    # ISO 8601
+        end_date: string      # ISO 8601
+      totals:
+        run_km: float
+        ride_km: float
+        swim_km: float
+        total_moving_hours: float
+        total_elevation_m: float
+      load_indicators:
+        weekly_tss_estimate: float
+        z2_time_ratio: float         # Z2 time as proportion of aerobic training
+        z4_z5_time_ratio: float      # High-intensity proportion
+        acute_chronic_ratio: float   # ACWR
+      activities:
+        type: array
+        items:
+          activity_id: string
+          date: string
+          sport_type: string
+          distance_km: float
+          duration_min: float
+          avg_hr: integer
+          cardiac_drift_pct: float   # null if streams unavailable
+          notable_flags: array       # e.g. ["cadence_drop_late", "hr_spike"]
+
+  - name: get_activity_detail
+    description: |
+      Deep analysis of a single activity, for when the agent needs to
+      explain a specific workout's performance.
+    input:
+      activity_id:
+        type: string
+        required: true
+    output:
+      basic:
+        date: string
+        sport_type: string
+        distance_km: float
+        duration_min: float
+      hr_zones:
+        z1_minutes: float
+        z2_minutes: float
+        z3_minutes: float
+        z4_minutes: float
+        z5_minutes: float
+      pace_analysis:
+        avg_pace: string             # "5:30/km"
+        first_half_pace: string
+        second_half_pace: string
+        positive_split_pct: float
+      advanced:
+        cardiac_drift_pct: float
+        avg_cadence: integer
+        cadence_drop_late_pct: float
+        estimated_vo2_contribution: float
+      quality_flags:
+        gps_anomalies_removed: integer
+        data_completeness_pct: float
+
+  - name: get_athlete_baseline
+    description: |
+      Personal baselines calculated from the past 90 days, used by the
+      agent to determine whether a workout is abnormal. Layer 2
+      maintains a cache of these values.
+    input: {}
+    output:
+      hr_zones:
+        z1_max: integer
+        z2_max: integer
+        z3_max: integer
+        z4_max: integer
+        z5_max: integer
+      pace_baselines:
+        easy_run_pace: string
+        threshold_pace: string
+        recent_5k_equivalent: string
+      fitness_trend:
+        last_7d_load: float
+        last_28d_load: float
+        form_score: float            # CTL - ATL; positive = fresh
+      last_updated: string
+
+  - name: get_race_calendar
+    description: |
+      Read the user's target race list and current training phase.
+      Data source is state_manager's YAML files.
+    input: {}
+    output:
+      races:
+        type: array
+        items:
+          name: string
+          date: string
+          sport_type: string
+          priority: [A, B, C]
+          target_time: string
+      current_phase:
+        phase_name: string           # base | build | peak | taper | recovery
+        week_in_phase: integer
+        weeks_to_next_race: integer
